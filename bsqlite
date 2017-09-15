@@ -11,16 +11,14 @@ sqliteversion="3.20.1"
 main() {
 
   uid=$(id -u)
-  if [ "${uid}" = "0" ]
-  then
+  if [ "${uid}" = "0" ]; then
      sudo=""
   fi
 
-  if [ ! -d ${srcdir} ]
-  then
+  if [ ! -d ${srcdir} ]; then
      $sudo mkdir -pv ${srcdir}
   fi
-  $sudo chown -R ${operator} ${srcdir}
+  $sudo chown -R ${operator}: ${srcdir}
 
   if [ -e /etc/redhat-release ]; then
 	  $sudo yum -y update
@@ -39,13 +37,13 @@ main() {
   cd ${srcdir}
   if [ ! -d sqlite ]; then
     echo "Downloading sqlite..."
-    $sudo curl -s ${sqlitedownloadurl} -o sqlitearchive.zip
-    $sudo unzip sqlitearchive.zip
-    $sudo rm sqlitearchive.zip
-    $sudo mv sqlite-amalgamation-* sqlite
+    curl -s ${sqlitedownloadurl} -o sqlitearchive.zip
+    unzip sqlitearchive.zip
+    rm sqlitearchive.zip
+    mv sqlite-amalgamation-* sqlite
   fi
   cd sqlite
-  $sudo bash -c 'cat << EOF > makefile
+  cat << EOF > makefile
 # Makefile
 
 CC = gcc
@@ -59,13 +57,15 @@ clean:
 	rm -f sqlite3 sqlite3.o
 
 install:
-	sudo cp -f sqlite3 /usr/local/bin
+	cp -f sqlite3 /usr/local/bin
 
 uninstall:
-	sudo rm -f /usr/local/bin/sqlite3
-EOF'
+	rm -f /usr/local/bin/sqlite3
+EOF
   
-  $sudo make sqlite3
+  make clean
+  $sudo make uninstall
+  make sqlite3
   $sudo make install
 
 }

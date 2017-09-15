@@ -1,5 +1,15 @@
 #!/bin/sh
 
+if [ ! -d /opt/src/vim ]; then
+  echo "Please run bvim first!"
+  exit 23
+fi
+
+if [ $(grep -i ubuntu /etc/os-release | wc -l) -eq 0 ]; then
+  echo "This script only run on Ubuntu!"
+  exit 28
+fi
+
 sudo apt-get update && sudo apt-get upgrade
 
 sudo apt-get install libncurses5-dev libgnome2-dev \ 
