@@ -1,0 +1,52 @@
+#!/bin/sh
+
+operator=$(whoami)
+srcdir=/opt/src
+nproc=$(grep -c ^processor /proc/cpuinfo)
+sudo="sudo"
+
+main() {
+
+   uid=$(id -u)
+   if [ "${uid}" = "0" ]
+   then
+      sudo=""
+   fi
+
+   if [ ! -d ${srcdir} ]
+   then
+      $sudo mkdir -pv ${srcdir}
+   fi
+   $sudo chown -R ${operator} ${srcdir}
+   
+   if [ -e /etc/redhat-release ]; then
+	   $sudo yum -y update
+     $sudo yum -y install git gcc make ncurses-devel gettext-devel
+     $sudo yum -y install openssl-devel perl-devel curl-devel expat-devel
+   elif [ -e /etc/debian_version ]; then
+     $sudo apt-get -y update
+     $sudo apt-get -y upgrade
+     $sudo apt-get -y install dh-autoreconf libcurl4-gnutls-dev libexpat1-dev
+     $sudo apt-get -y install gettext libz-dev libssl-dev
+   else
+	   echo "This script doesn't work on your Linux version."
+	   exit 23
+   fi
+
+   cd ${srcdir}
+   if [ ! -d git ]
+   then
+      echo "Cloning github git repository..."
+      #git clone https://github.com/git/git
+      git clone git://git.kernel.org/pub/scm/git/git.git
+   fi
+   
+   cd ${srcdir}/git
+   make clean
+   git pull
+   make prefix=/usr/local -j $(nproc)
+   $sudo make install prefix=/usr/local
+
+}
+
+main $@

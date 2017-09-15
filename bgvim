@@ -1,0 +1,21 @@
+#!/bin/sh
+
+sudo apt-get update && sudo apt-get upgrade
+
+sudo apt-get install libncurses5-dev libgnome2-dev \ 
+  libgnomeui-dev libgtk2.0-dev libatk1.0-dev \
+  libbonoboui2-dev libcairo2-dev libx11-dev \
+  libxpm-dev libxt-dev
+
+cd /opt/src/vim
+make distclean
+sudo make uninstall
+git pull
+
+./configure --with-compiledby=lyderic
+  --with-features=huge --enable-luainterp \
+  --with-lua-prefix=/usr/local \
+  --enable-fail-if-missing --enable-gui=gnome2
+
+make -j $(nproc)
+sudo make install

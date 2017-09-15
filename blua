@@ -1,0 +1,58 @@
+#!/bin/sh
+
+operator=$(whoami)
+srcdir=/opt/src
+platform=linux
+nproc=$(grep -c ^processor /proc/cpuinfo)
+sudo="sudo"
+luaversion="5.3.4"
+
+main() {
+
+   uid=$(id -u)
+   if [ "${uid}" = "0" ]
+   then
+      sudo=""
+   fi
+
+   if [ ! -d ${srcdir} ]
+   then
+      $sudo mkdir -pv ${srcdir}
+   fi
+   $sudo chown -R ${operator} ${srcdir}
+
+   if [ -e /etc/redhat-release ]; then
+	   $sudo yum -y update
+	   $sudo yum -y install gcc make readline-devel curl
+   elif [ -e /etc/alpine-release ]; then
+      $sudo apk update
+      $sudo apk add musl-dev gcc make readline-dev curl
+   elif [ -e /etc/debian_version ]; then
+      $sudo apt-get -y update
+      $sudo apt-get -y install gcc make libreadline-dev curl
+   else
+      echo "Your distribution is not supported yet!"
+      exit 23
+   fi
+
+   cd ${srcdir}
+   if [ ! -d lua ]
+   then
+      echo "Downloading lua source code..."
+      curl -s https://www.lua.org/ftp/lua-${luaversion}.tar.gz | tar xzf - -C /opt/src
+   fi
+
+   cd ${srcdir}/lua-${luaversion}
+   make clean
+   if [ -d /usr/local/include ]; then
+      $sudo make uninstall
+   fi
+
+   make ${platform} -j $nproc
+   $sudo make install
+
+   lua -v
+
+}
+
+main $@

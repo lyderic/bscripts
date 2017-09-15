@@ -1,0 +1,58 @@
+#!/bin/sh
+
+operator=$(whoami)
+srcdir=/opt/src
+nproc=$(grep -c ^processor /proc/cpuinfo)
+sudo="sudo"
+
+main() {
+
+   uid=$(id -u)
+   if [ "${uid}" = "0" ]
+   then
+      sudo=""
+   fi
+
+   if [ ! -d ${srcdir} ]
+   then
+      $sudo mkdir -pv ${srcdir}
+   fi
+   $sudo chown -R ${operator} ${srcdir}
+   
+   if [ -e /etc/redhat-release ]; then
+	   $sudo yum -y update
+	   $sudo yum -y install git gcc make ncurses-devel 
+   elif [ -e /etc/alpine-release ]; then
+      $sudo apk update
+      $sudo apk add musl-dev git gcc make ncurses-dev
+   elif [ -e /etc/debian_version ]; then
+      $sudo apt-get -y update
+      $sudo apt-get -y install git gcc make libncurses-dev
+   else
+	   echo "Your distribution is not supported yet!"
+	   exit 23
+   fi
+
+   cd ${srcdir}
+   if [ ! -d vim ]
+   then
+      echo "Cloning github vim repository..."
+      git clone https://github.com/vim/vim.git
+   fi
+   
+   cd ${srcdir}/vim
+   make clean
+   git pull
+
+   ./configure \
+   --with-compiledby=lyderic \
+   --with-features=huge \
+   --enable-fail-if-missing
+
+   $sudo make uninstall
+   make -j $nproc
+   $sudo make install
+
+}
+
+main $@
