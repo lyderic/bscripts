@@ -8,16 +8,14 @@ sudo="sudo"
 main() {
 
    uid=$(id -u)
-   if [ "${uid}" = "0" ]
-   then
+   if [ "${uid}" = "0" ]; then
       sudo=""
    fi
 
-   if [ ! -d ${srcdir} ]
-   then
+   if [ ! -d ${srcdir} ]; then
       $sudo mkdir -pv ${srcdir}
    fi
-   $sudo chown -R ${operator} ${srcdir}
+   $sudo chown -R ${operator}: ${srcdir}
    
    if [ -e /etc/redhat-release ]; then
 	   $sudo yum -y update
@@ -37,7 +35,6 @@ main() {
    if [ ! -d git ]
    then
       echo "Cloning github git repository..."
-      #git clone https://github.com/git/git
       git clone git://git.kernel.org/pub/scm/git/git.git
    fi
    
