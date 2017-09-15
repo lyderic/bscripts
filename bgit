@@ -23,6 +23,9 @@ main() {
 	   $sudo yum -y update
      $sudo yum -y install git gcc make ncurses-devel gettext-devel
      $sudo yum -y install openssl-devel perl-devel curl-devel expat-devel
+   elif [ -e /etc/alpine-release ]; then
+      $sudo apk update
+      $sudo apk add musl-dev git gcc make ncurses-dev gettext-dev openssl-dev perl-dev curl-dev expat-dev
    elif [ -e /etc/debian_version ]; then
      $sudo apt-get -y update
      $sudo apt-get -y upgrade
