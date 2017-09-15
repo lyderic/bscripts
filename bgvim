@@ -13,8 +13,7 @@ sudo make uninstall
 git pull
 
 ./configure --with-compiledby=lyderic
-  --with-features=huge --enable-luainterp \
-  --with-lua-prefix=/usr/local \
+  --with-features=huge \
   --enable-fail-if-missing --enable-gui=gnome2
 
 make -j $(nproc)
