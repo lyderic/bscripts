@@ -10,16 +10,14 @@ luaversion="5.3.4"
 main() {
 
    uid=$(id -u)
-   if [ "${uid}" = "0" ]
-   then
+   if [ "${uid}" = "0" ]; then
       sudo=""
    fi
 
-   if [ ! -d ${srcdir} ]
-   then
+   if [ ! -d ${srcdir} ]; then
       $sudo mkdir -pv ${srcdir}
    fi
-   $sudo chown -R ${operator} ${srcdir}
+   $sudo chown -R ${operator}: ${srcdir}
 
    if [ -e /etc/redhat-release ]; then
 	   $sudo yum -y update
@@ -42,7 +40,8 @@ main() {
       curl -s https://www.lua.org/ftp/lua-${luaversion}.tar.gz | tar xzf - -C /opt/src
    fi
 
-   cd ${srcdir}/lua-${luaversion}
+   mv lua-${luaversion} lua
+   cd lua
    make clean
    if [ -d /usr/local/include ]; then
       $sudo make uninstall
