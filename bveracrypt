@@ -1,0 +1,67 @@
+#!/bin/sh
+
+#### SETUP #################################################################
+version="1.21"
+wxWidgetsVersion="3.0.3"
+source="https://launchpad.net/veracrypt/trunk/1.21/+download/VeraCrypt_${version}_Source.tar.bz2"
+wxWidgetsSource="https://github.com/wxWidgets/wxWidgets/releases/download/v${wxWidgetsVersion}/wxWidgets-${wxWidgetsVersion}.tar.bz2"
+############################################################################
+
+operator=$(whoami)
+srcdir=/opt/src
+nproc=$(grep -c ^processor /proc/cpuinfo)
+sudo="sudo"
+
+main() {
+
+   uid=$(id -u)
+   if [ "${uid}" = "0" ]; then
+      sudo=""
+   fi
+
+   if [ ! -d ${srcdir} ]; then
+      $sudo mkdir -pv ${srcdir}
+   fi
+   $sudo chown -R ${operator}: ${srcdir}
+   
+   if [ -e /etc/debian_version ]; then
+      $sudo apt-get -y update
+      $sudo apt-get -y install wget g++ make pkg-config libfuse-dev
+   else
+	   echo "Your distribution is not supported yet!"
+	   exit 23
+   fi
+
+   echo "Initialising..."
+   cd ${srcdir}
+   if [ -d veracrypt ]; then
+     rm -rf veracrypt*
+   fi
+   echo "Getting veracrypt source code..."
+   wget "${source}"
+   mkdir veracrypt
+   tar xjf VeraCrypt*tar.bz2 -C veracrypt
+   rm -v VeraCrypt*tar.bz2 
+   echo "Getting wxWidgets source code..."
+   wget ${wxWidgetsSource}
+   tar xjf wxWidgets-${wxWidgetsVersion}.tar.bz2 -C veracrypt
+   rm -rf wxWidgets*
+
+   echo "Patching wxWidgets config scripts"
+   cd ${srcdir}/veracrypt/wxWidgets-${wxWidgetsVersion}
+   rm -v config.guess config.sub
+   wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD" \
+     -O config.guess
+   wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD" \
+     -O config.sub
+
+   cd ${srcdir}/veracrypt/src
+   make -j $nproc NOGUI=1 WXSTATIC=1 WX_ROOT=${srcdir}/veracrypt/wxWidgets-${wxWidgetsVersion} wxbuild
+   make -j $nproc NOGUI=1 WXSTATIC=1
+
+   $sudo cp Main/veracrypt /usr/local/bin/veracrypt
+   /usr/local/bin/veracrypt --version
+
+}
+
+main $@
