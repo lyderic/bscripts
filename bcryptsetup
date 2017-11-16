@@ -1,0 +1,55 @@
+#!/bin/sh
+
+##### SETUP ####
+mainversion="1.7"
+subversion="5"
+version="${mainversion}.${subversion}"
+source="https://www.kernel.org/pub/linux/utils/cryptsetup/v${mainversion}/cryptsetup-${version}.tar.xz"
+
+operator=$(whoami)
+srcdir=/opt/src
+nproc=$(grep -c ^processor /proc/cpuinfo)
+sudo="sudo"
+
+main() {
+
+   uid=$(id -u)
+   if [ "${uid}" = "0" ]; then
+      sudo=""
+   fi
+
+   if [ ! -d ${srcdir} ]; then
+      $sudo mkdir -pv ${srcdir}
+   fi
+   $sudo chown -R ${operator}: ${srcdir}
+   
+   if [ -e /etc/debian_version ]; then
+      $sudo apt-get -y update
+      $sudo apt-get -y install wget uuid-dev libdevmapper-dev libpopt-dev libgcrypt20-dev
+   else
+	   echo "Your distribution is not supported yet!"
+	   exit 23
+   fi
+
+   echo "Reinitialising..."
+   cd ${srcdir}
+   if [ -d cryptsetup ]; then
+     rm -rf cryptsetup*
+   fi
+   echo "Getting cryptsetup source code..."
+   wget "${source}"
+   xz -dvv cryptsetup-${version}.tar.xz
+   tar xf cryptsetup-${version}.tar
+   rm -v cryptsetup-${version}.tar
+   mv -v cryptsetup-${version} cryptsetup
+   
+   cd ${srcdir}/cryptsetup
+   ./configure
+
+   $sudo make uninstall
+   make -j $nproc
+   $sudo make install
+
+}
+
+main $@
