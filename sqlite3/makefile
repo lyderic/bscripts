@@ -1,18 +1,1 @@
-# Makefile
-
-CC = gcc
-CCFLAGS = -Wall -std=c99 -O2
-
-sqlite3: sqlite3.c
-	$(CC) -c linenoise.c
-	$(CC) $(CCFLAGS) -DHAVE_LINENOISE shell.c sqlite3.c linenoise.o -lpthread -ldl -o sqlite3
-	strip sqlite3
-
-clean:
-	rm -vf sqlite3 *.o
-
-install:
-	cp -f sqlite3 /usr/local/bin
-
-uninstall:
-	rm -f /usr/local/bin/sqlite3
+makefile-linenoise
