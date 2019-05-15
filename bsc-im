@@ -1,0 +1,44 @@
+#!/bin/sh
+
+operator=$(whoami)
+srcdir=/opt/src
+nproc=$(grep -c ^processor /proc/cpuinfo)
+sudo="sudo"
+
+main() {
+
+   uid=$(id -u)
+   if [ "${uid}" = "0" ]; then
+      sudo=""
+   fi
+
+   if [ ! -d ${srcdir} ]; then
+      $sudo mkdir -pv ${srcdir}
+   fi
+   $sudo chown -R ${operator}: ${srcdir}
+   
+   if [ -e /etc/debian_version ]; then
+      $sudo apt-get -y update
+      $sudo apt-get -y install git gcc make bison libncurses-dev libncursesw5-dev 
+   else
+	   echo "Your distribution is not supported yet!"
+	   exit 23
+   fi
+
+   cd ${srcdir}
+   if [ ! -d sc-im ]; then
+      echo "Cloning github sc-im repository..."
+      git clone https://github.com/andmarti1424/sc-im.git
+   fi
+   
+   cd ${srcdir}/sc-im/src
+   make clean
+   git pull
+
+   $sudo make uninstall
+   make -j $nproc
+   $sudo make install
+
+}
+
+main $@
