@@ -32,12 +32,14 @@ main() {
    fi
    
    cd ${srcdir}/sc-im/src
+	 $sudo unlink /usr/local/bin/sc
    make clean
    git pull
 
    $sudo make uninstall
    make -j $nproc
    $sudo make install
+	 $sudo ln -s /usr/local/bin/sc-im /usr/local/bin/sc
 
 }
 
