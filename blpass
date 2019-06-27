@@ -1,0 +1,48 @@
+#!/bin/sh
+
+operator=$(whoami)
+srcdir=/opt/src
+nproc=$(grep -c ^processor /proc/cpuinfo)
+sudo="sudo"
+
+main() {
+
+   uid=$(id -u)
+   if [ "${uid}" = "0" ]; then
+      sudo=""
+   fi
+
+   if [ ! -d ${srcdir} ]; then
+      $sudo mkdir -pv ${srcdir}
+   fi
+   $sudo chown -R ${operator}: ${srcdir}
+   
+   if [ -e /etc/redhat-release ]; then
+	   $sudo yum -y update
+	   $sudo yum -y install git openssl libcurl libxml2 pinentry xclip openssl-devel libxml2-devel libcurl-devel gcc gcc-c++ make cmake
+   elif [ -e /etc/debian_version ]; then
+      $sudo apt-get -y update
+			$sudo apt-get -y install git bash-completion build-essential cmake libcurl4 libcurl4-openssl-dev libssl-dev libxml2 libxml2-dev libssl1.1 pkg-config ca-certificates xclip
+
+   else
+	   echo "Your distribution is not supported yet!"
+	   exit 23
+   fi
+
+   cd ${srcdir}
+   if [ ! -d lastpass-cli ]; then
+      echo "Cloning github lastpass-cli repository..."
+      git clone https://github.com/lastpass/lastpass-cli.git
+   fi
+   
+   cd ${srcdir}/lastpass-cli
+   make clean
+   git pull
+
+   $sudo make uninstall
+   make -j $nproc
+   $sudo make install
+
+}
+
+main $@
