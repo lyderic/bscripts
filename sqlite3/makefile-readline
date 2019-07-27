@@ -8,10 +8,10 @@ sqlite3: sqlite3.c
 	#strip sqlite3
 
 clean:
-	rm -f sqlite3 sqlite3.o
+	rm -vf sqlite3 *.o
 
 install:
-	cp -f sqlite3 /usr/local/bin
+	cp -vf sqlite3 /usr/local/bin
 
 uninstall:
-	rm -f /usr/local/bin/sqlite3
+	rm -vf /usr/local/bin/sqlite3

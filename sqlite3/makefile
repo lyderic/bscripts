@@ -1,1 +1,1 @@
-makefile-linenoise
+makefile-readline
