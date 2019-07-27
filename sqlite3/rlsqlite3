@@ -1,0 +1,6 @@
+rlwrap \
+	-pBlue \
+	--filter pipeto \
+	--case-insensitive \
+	--file $HOME/repositories/bscripts/sqlite3/sqlite3_completion \
+sqlite3 $@
