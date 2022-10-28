@@ -38,8 +38,12 @@ main() {
 	fi
 	
 	cd ${srcdir}/vim
-	make clean
+	git checkout master
 	git pull
+	latest_tag=$(git tag | tail -1)
+	echo "Latest tag: ${latest_tag}"
+	git checkout ${latest_tag} -b ${latest_tag}
+	make clean
 
 	./configure \
 	--with-compiledby=lyderic \
@@ -47,9 +51,12 @@ main() {
 	--enable-fail-if-missing
 
 	$sudo make uninstall
-	make -j $nproc
+	make -j $nproc || { echo "* * *   VIM BUILDING FAILED!  * * *" ; exit 42 ; }
 	$sudo make install
 
+	git checkout master
+	git branch --delete "${latest_tag}"
+	
 	vim --version | head -3
 	
 }
