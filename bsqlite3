@@ -1,16 +1,20 @@
-#!/bin/sh
+#!/bin/bash
 
 operator=$(whoami)
 srcdir=/opt/src
 nproc=$(grep -c ^processor /proc/cpuinfo)
 sudo="sudo"
-version="3.41.0"
+version="0.0.0"
 
 main() {
 
+	[ -z "${1}" ] && die "Please supply version as argument!"
+	version="${1}"
+	[ "${version}" == "0.0.0" ] && die "${version}: invalid version!"
+
 	checkAlready
 
-	uid=$(id -u)
+	local uid=$(id -u)
 	if [ "${uid}" = "0" ]; then
 		sudo=""
 	fi
@@ -59,10 +63,10 @@ checkAlready() {
   # sqlite3 installed at all?
 	which sqlite3 || { echo "sqlite3 not found!" ; exit 60 ; }
 	# extract current sqlite version
-	current=$(sqlite3 --version | cut -d' ' -f 1)
+	current=$(sqlite3 --version | awk '{print $1}')
 	if [ "${current}" = "${version}" ] ; then
 		echo "Version ${version} is already installed!"
-		echo "Please set 'version' variable in script and try again"
+		echo "Please use another version"
 		exit 23
 	fi
 }
