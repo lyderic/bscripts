@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 operator=$(whoami)
 srcdir=/opt/src
@@ -6,51 +6,56 @@ platform=linux
 nproc=$(grep -c ^processor /proc/cpuinfo)
 sudo="sudo"
 luaversion="5.4.4"
+curversion=
 
 main() {
 
-   uid=$(id -u)
-   if [ "${uid}" = "0" ]; then
-      sudo=""
-   fi
+	which lua && {
+		curversion=$(lua -v | awk '{print $2}')
+		[ "${curversion}" == "${luaversion}" ] && {
+			warn "lua version ${curversion} already installed"
+			exit 0
+		}
+	} || {
+		echo "lua not found"
+	}
 
-   if [ ! -d ${srcdir} ]; then
-      $sudo mkdir -pv ${srcdir}
-   fi
-   $sudo chown -R ${operator}: ${srcdir}
+	uid=$(id -u)
+	if [ "${uid}" = "0" ]; then
+		sudo=""
+	fi
 
-   if [ -e /etc/redhat-release ]; then
-	   $sudo yum -y update
-	   $sudo yum -y install gcc make readline-devel curl
-   elif [ -e /etc/alpine-release ]; then
-      $sudo apk update
-      $sudo apk add musl-dev gcc make readline-dev curl
-   elif [ -e /etc/debian_version ]; then
-      $sudo apt-get -y update
-      $sudo apt-get -y install gcc make libreadline-dev curl
-   else
-      echo "Your distribution is not supported yet!"
-      exit 23
-   fi
+	[ -d ${srcdir} ] || $sudo mkdir -pv ${srcdir}
+	$sudo chown -R ${operator}: ${srcdir}
 
-   cd ${srcdir}
-   if [ ! -d lua ]
-   then
-      echo "Downloading lua source code..."
-      curl -s https://www.lua.org/ftp/lua-${luaversion}.tar.gz | tar xzf - -C /opt/src
-   fi
+	if [ -e /etc/redhat-release ]; then
+		$sudo yum -y update
+		$sudo yum -y install gcc make readline-devel curl
+	elif [ -e /etc/alpine-release ]; then
+		$sudo apk update
+		$sudo apk add musl-dev gcc make readline-dev curl
+	elif [ -e /etc/debian_version ]; then
+		$sudo apt-get -y update
+		$sudo apt-get -y install gcc make libreadline-dev curl
+	else
+		echo "Your distribution is not supported yet!"
+		exit 23
+	fi
 
-   mv lua-${luaversion} lua
-   cd lua
-   make clean
-   if [ -d /usr/local/include ]; then
-      $sudo make uninstall
-   fi
+	cd ${srcdir}
+	[ -d lua ] && $sudo rm -f lua
+	echo "Downloading lua source code..."
+	curl -s https://www.lua.org/ftp/lua-${luaversion}.tar.gz | tar xzf - -C /opt/src
 
-   make ${platform} -j $nproc
-   $sudo make install
+	mv lua-${luaversion} lua
+	cd lua
+	make clean
+	[ -f /usr/local/include/lua.h ] && $sudo make uninstall
 
-   lua -v
+	make ${platform} -j $nproc
+	$sudo make install
+
+	lua -v
 
 }
 

@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# source: https://github.com/luarocks/luarocks/wiki/Installation-instructions-for-Unix
+
+operator=$(whoami)
+srcdir=/opt/src
+platform=linux
+nproc=$(grep -c ^processor /proc/cpuinfo)
+sudo="sudo"
+luarocksversion="3.9.2"
+
+main() {
+
+	which luarocks && {
+		curversion=$(luarocks --version | awk 'NR == 1 {print $2}')
+		[ "${curversion}" == "${luarocksversion}" ] && {
+			warn "lua version ${curversion} already installed"
+			exit 0
+		}
+	} || {
+		echo "lua not found"
+	}
+
+	uid=$(id -u)
+	[ "${uid}" = "0" ] && sudo=""
+
+	[ -d ${srcdir} ] || $sudo mkdir -pv ${srcdir}
+	$sudo chown -R ${operator}: ${srcdir}
+
+	if [ -e /etc/redhat-release ]; then
+		$sudo yum -y update
+		$sudo yum -y install gcc make readline-devel curl libtermcap-devel \
+			 ncurses-devel libevent-devel 
+	elif [ -e /etc/debian_version ]; then
+		$sudo apt-get -y update
+		$sudo apt-get -y install gcc make libreadline-dev curl
+	else
+		echo "Your distribution is not supported yet!"
+		exit 23
+	fi
+
+	cd ${srcdir}
+	[ -d luarocks ] && rm -f luarocks
+	echo "Downloading luarocks source code..."
+	curl -sL https://luarocks.org/releases/luarocks-${luarocksversion}.tar.gz | \
+		tar xzf - -C /opt/src
+
+	mv luarocks-${luarocksversion} luarocks
+	cd luarocks
+	make clean
+	[ -x /usr/local/bin/luarocks ] && $sudo make uninstall
+
+	./configure
+	make ${platform} -j $nproc
+	$sudo make install
+
+	luarocks --version
+
+}
+
+main $@
