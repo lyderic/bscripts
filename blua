@@ -56,7 +56,18 @@ main() {
 	$sudo make install
 
 	lua -v
+	install_libs
 
+}
+
+install_libs() {
+	lua_lib_path=$(lua -e "print(package.path)" | awk -F'?' '{print $1}')
+	ok "lua library path found: ${lua_lib_path}"
+	for file in lualibs/*.lua ; do
+		#echo "${file} --> ${lua_lib_path}"
+		$sudo cp -uv "${file}" "${lua_lib_path}"
+		$sudo chown -Rv root: "${lua_lib_path}"
+	done
 }
 
 main $@
