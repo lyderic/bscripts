@@ -20,6 +20,10 @@ local function dumptable(t)
   for k,v in pairs(t) do print(k,v) end
 end
 
+local function printf(...)
+	io.write(string.format(...))
+end
+
 local function exists(path)
 	return ose(sf("test -e %q", path))
 end
@@ -68,6 +72,7 @@ end
 return {
 	home = home,
 	dumptable = dumptable,
+	printf = printf,
 	exists = exists,
 	mkdir = mkdir,
 	rmdir = rmdir,
