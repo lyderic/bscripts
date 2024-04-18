@@ -1,5 +1,6 @@
 #!/bin/sh
 
+luaversion="5.4"
 operator=$(whoami)
 srcdir=/opt/src
 nproc=$(grep -c ^processor /proc/cpuinfo)
@@ -7,36 +8,29 @@ sudo="sudo"
 
 main() {
 
+	[ -e /etc/debian_version ] || {
+	   echo "This works only on debian-like distros"
+	   exit 23
+	}
+
 	uid=$(id -u)
 	if [ "${uid}" = "0" ]; then
 	   sudo=""
 	fi
 
-	if [ ! -d ${srcdir} ]; then
-	   $sudo mkdir -pv ${srcdir}
-	fi
+	[ -d ${srcdir} ] || $sudo mkdir -pv ${srcdir}
 	$sudo chown -R ${operator}: ${srcdir}
 	
-	if [ -e /etc/redhat-release ]; then
-	   $sudo yum -y update
-	   $sudo yum -y install git gcc make ncurses-devel 
-	elif [ -e /etc/alpine-release ]; then
-	   $sudo apk update
-	   $sudo apk add musl-dev git gcc make ncurses-dev
-	elif [ -e /etc/debian_version ]; then
-	   $sudo apt-get -y update
-	   $sudo apt-get -y install git gcc make libncurses-dev
-	else
-	   echo "Your distribution is not supported yet!"
-	   exit 23
-	fi
+	$sudo apt-get -y update
+	$sudo apt-get -y install git gcc make libncurses-dev \
+		liblua${luaversion}-dev lua${luaversion}
 
-	cd ${srcdir}
-	if [ ! -d vim ]; then
-	   echo "Cloning github vim repository..."
-	   git clone https://github.com/vim/vim.git
-	fi
-	
+	[ -d ${srcdir}/vim ] || {
+		cd "${srcdir}"
+		echo "Cloning github vim repository..."
+		git clone https://github.com/vim/vim.git
+	}
+
 	cd ${srcdir}/vim
 	git checkout master
 	git pull
@@ -48,17 +42,21 @@ main() {
 	./configure \
 	--with-compiledby=lyderic \
 	--with-features=huge \
+	--enable-luainterp=yes \
 	--enable-fail-if-missing
 
 	$sudo make uninstall
-	make -j $nproc || { echo "* * *   VIM BUILDING FAILED!  * * *" ; exit 42 ; }
+	make -j $nproc || {
+		echo "* * *   VIM BUILDING FAILED!  * * *"
+		exit 42
+	}
 	$sudo make install
 
 	git checkout master
 	git branch --delete "${latest_tag}"
-	
+
 	vim --version | head -3
-	
+
 }
 
 main $@
