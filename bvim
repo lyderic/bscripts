@@ -21,9 +21,9 @@ main() {
 	[ -d ${srcdir} ] || $sudo mkdir -pv ${srcdir}
 	$sudo chown -R ${operator}: ${srcdir}
 	
-	$sudo apt-get -y update
-	$sudo apt-get -y install git gcc make libncurses-dev \
-		liblua${luaversion}-dev lua${luaversion}
+	#$sudo apt-get -y update
+	#$sudo apt-get -y install git gcc make libncurses-dev \
+		#liblua${luaversion}-dev lua${luaversion}
 
 	[ -d ${srcdir}/vim ] || {
 		cd "${srcdir}"
@@ -42,7 +42,7 @@ main() {
 	./configure \
 	--with-compiledby=lyderic \
 	--with-features=huge \
-	--enable-luainterp=yes \
+	--enable-luainterp=dynamic \
 	--enable-fail-if-missing
 
 	$sudo make uninstall
