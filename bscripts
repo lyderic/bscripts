@@ -1,0 +1,107 @@
+#!/usr/bin/env -S just --justfile
+
+alias h := _help
+
+_help:
+	@$yo --list --unsorted --alias-style left \
+		--color always \
+		--list-heading='' --list-prefix=' ' \
+		| sed -e 's/alias: //' | awk 'NF'
+
+vim: (_need "gcc" "make" "libncurses-dev") (_get "vim" "https://github.com/vim/vim.git")
+	#!/bin/bash
+	cd ${srcdir}/vim
+	git checkout master
+	git pull
+	latest_tag=$(git tag | tail -1)
+	echo "Latest tag: ${latest_tag}"
+	git checkout ${latest_tag} -b ${latest_tag}
+	make clean
+	./configure \
+	--with-compiledby=lyderic \
+	--with-features=huge \
+	--enable-luainterp=dynamic \
+	--enable-fail-if-missing
+	sudo make uninstall
+	make -j $nproc || {
+	echo "* * *   VIM BUILDING FAILED!  * * *"
+	exit 42
+	}
+	sudo make install
+	git checkout master
+	git branch --delete "${latest_tag}"
+	vim --version | head -3
+
+lua: _init
+	#!/bin/bash
+	[ $(lua -v | awk '{print$2}') == "${luaversion}" ] && {
+		echo -e "\e[33mlua ${luaversion} already installed\e[m"
+		exit 0
+	}
+	$yo _need gcc make curl
+	cd ${srcdir}
+	[ -d lua ] && sudo rm -f lua
+	echo "Downloading lua source code..."
+	url=https://www.lua.org/ftp/lua-${luaversion}.tar.gz
+	curl -s "${url}" | tar xzf - -C /opt/src
+	mv lua-${luaversion} lua
+	cd lua
+	make clean
+	[ -f /usr/local/include/lua.h ] && sudo make uninstall
+	make ${platform} -j $nproc
+	sudo make install
+	lua -v
+
+lowdown: 
+	#!/bin/bash
+	[ $(lowdown --version | awk '{print$2}') == "${lowdownversion}" ] && {
+		echo -e "\e[33mlowdown ${lowdownversion} already installed\e[m"
+		exit 0
+	}
+	$yo _need gcc make bmake
+	url="https://github.com/kristapsdz/lowdown.git"
+	$yo _get lowdown "${url}"
+	cd ${srcdir}/lowdown
+	./configure
+	bmake
+	sudo bmake install install_libs
+
+_get name url: _init
+	#!/bin/bash
+	[ -d ${srcdir}/${name} ] || {
+		cd "${srcdir}"
+		echo "Cloning ${name} repository..."
+		git clone --depth 1 "${url}"
+	}
+	cd "${srcdir}/${name}"
+	git pull --depth 1
+
+_need *packages: _init
+	sudo apt install ${packages}
+
+[no-exit-message]
+_init:
+	#!/bin/bash
+	[ -e /etc/debian_version ] || {
+		echo -e "\e[1;31mThis works only on Debian/Ubuntu\e[m"
+		exit 127
+	}
+	[ -d "${srcdir}" ] && exit 0
+	sudo mkdir -pv ${srcdir}
+	sudo chown -R ${operator}: ${srcdir}
+
+[private]
+v:
+	$yo --evaluate
+
+operator := `whoami`
+srcdir := "/opt/src"
+nproc := `grep -c ^processor /proc/cpuinfo`
+yo := justfile()
+platform := "linux"
+luaversion := "5.5.0"
+lowdownversion := "3.0.1"
+
+set export
+set shell := ["bash","-uc"]
+# vim: ft=just
