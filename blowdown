@@ -16,7 +16,7 @@ main() {
 
 	uid=$(id -u)
 	if [ "${uid}" = "0" ]; then
-	   sudo=""
+		sudo=""
 	fi
 
 	[ -d ${srcdir} ] || $sudo mkdir -pv ${srcdir}
@@ -38,4 +38,4 @@ main() {
 
 }
 
-main()
+main ${@}
