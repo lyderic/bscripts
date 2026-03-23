@@ -1,0 +1,41 @@
+#!/bin/bash
+
+operator=$(whoami)
+srcdir=/opt/src
+nproc=$(grep -c ^processor /proc/cpuinfo)
+sudo="sudo"
+
+main() {
+
+	lowdown --version && return 0
+
+	[ -e /etc/debian_version ] || {
+		echo "This works only on debian-like distros"
+		return 23	
+	}
+
+	uid=$(id -u)
+	if [ "${uid}" = "0" ]; then
+	   sudo=""
+	fi
+
+	[ -d ${srcdir} ] || $sudo mkdir -pv ${srcdir}
+	$sudo chown -R ${operator}: ${srcdir}
+
+	$sudo apt install gcc make bmake
+
+	[ -d ${srcdir}/lowdown ] || {
+		cd "${srcdir}"
+		echo "Cloning github lowdown repository..."
+		git clone https://github.com/kristapsdz/lowdown.git
+	}
+
+	cd ${srcdir}/lowdown
+
+	./configure
+	bmake
+	$sudo bmake install install_libs
+
+}
+
+main()
