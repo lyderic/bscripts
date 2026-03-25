@@ -54,17 +54,22 @@ lua: _init
 
 lowdown: 
 	#!/bin/bash
-	[ $(lowdown --version | awk '{print$2}') == "${lowdownversion}" ] && {
-		echo -e "\e[33mlowdown ${lowdownversion} already installed\e[m"
+	[ $(lowdown --version) == "lowdown 3.0.1" ] && {
+		echo -e "\e[33mlowdown already installed\e[m"
 		exit 0
 	}
-	$yo _need gcc make bmake
+	$yo _need gcc make bmake checkinstall
 	url="https://github.com/kristapsdz/lowdown.git"
 	$yo _get lowdown "${url}"
 	cd ${srcdir}/lowdown
 	./configure
 	bmake
-	sudo bmake install install_libs
+	sudo checkinstall \
+		--pkgname=lowdown \
+		--pkgversion=3.0.1 \
+		--backup=no --deldoc=yes \
+		--fstrans=no --default \
+	bmake install install_libs
 
 _get name url: _init
 	#!/bin/bash
